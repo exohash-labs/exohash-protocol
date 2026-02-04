@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package exohash.beacon.v1;
+
+import "gogoproto/gogo.proto";
+
+option go_package exohash.beacon.v1;
+
+// Params defines the *whitelisted* configuration surface for x/beacon.
+//
+// 🔒 Governance model requirement:
+// - Params may only be updated via x/exohgov (EXOH stakers).
+// - Legacy x/gov must not have authority.
+// - Keep this intentionally minimal to avoid opening a broad governance surface.
+//
+// NOTE:
+// We include `authority` for standard Cosmos SDK pattern compatibility (MsgUpdateParams),
+// BUT exohgov execution will explicitly forbid changing it (we enforce that in keeper).
+message Params {
+  option (gogoproto.equal) = true;
+
+  // authority is the address authorized to execute MsgUpdateParams.
+  // On mainnet, this must be the exohgov module account address (set via app wiring).
+  string authority = 1;
+
+  // Enables or disables beacon/DKG behavior (future-proof toggle).
+  bool enabled = 2;
+
+  // Session interval in blocks for running DKG / randomness epochs.
+  // (Replaces compile-time constant for mainnet tuning.)
+  uint64 session_interval_blocks = 3;
+
+  // Phase durations (in blocks) for DKG lifecycle.
+  uint64 commitment_phase_blocks    = 4;
+  uint64 shares_phase_blocks        = 5;
+  uint64 pubshare_phase_blocks      = 6;
+  uint64 finalization_phase_blocks  = 7;
+
+  // Participation bounds.
+  uint32 min_participants = 8;
+  uint32 max_participants = 9;
+}

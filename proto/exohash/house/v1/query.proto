@@ -1,0 +1,144 @@
+syntax = "proto3";
+
+package exohash.house.v1;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+// FIX: Revert to v1beta1 because v1 is missing in your local proto folder
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "exohash/house/v1/params.proto";
+import "exohash/house/v1/bankroll.proto";
+import "exohash/house/v1/bet.proto";
+import "exohash/house/v1/game.proto";
+
+option go_package exohash.house.v1;
+
+service Query {
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/house/types/params";
+  }
+
+  rpc Bankroll(QueryGetBankrollRequest) returns (QueryGetBankrollResponse) {
+    option (google.api.http).get = "/house/types/bankroll/{id}";
+  }
+
+  rpc Bankrolls(QueryAllBankrollsRequest) returns (QueryAllBankrollsResponse) {
+    option (google.api.http).get = "/house/types/bankrolls";
+  }
+
+  rpc BankrollGames(QueryBankrollGamesRequest) returns (QueryBankrollGamesResponse) {
+    option (google.api.http).get = "/house/types/bankroll/{id}/game_status";
+  }
+
+  rpc Bet(QueryGetBetRequest) returns (QueryGetBetResponse) {
+    option (google.api.http).get = "/house/types/bet/{id}";
+  }
+  
+  rpc BetsByBankroll(QueryBetsByBankrollRequest) returns (QueryBetsByBankrollResponse) {
+    option (google.api.http).get = "/house/types/bets/by_bankroll/{bankroll_id}";
+  }
+
+  rpc BetsByBettor(QueryBetsByBettorRequest) returns (QueryBetsByBettorResponse) {
+    option (google.api.http).get = "/house/types/bets/by_bettor/{bettor}";
+  }
+
+  rpc GameDefinition(QueryGameDefinitionRequest) returns (QueryGameDefinitionResponse) {
+    option (google.api.http).get = "/house/types/game_definition/{id}";
+  }
+
+  rpc GameDefinitions(QueryGameDefinitionsRequest) returns (QueryGameDefinitionsResponse) {
+    option (google.api.http).get = "/house/types/game_definitions";
+  }     
+}
+
+// --- Request/Response Messages ---
+
+message QueryParamsRequest {}
+
+message QueryParamsResponse {
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryGetBankrollRequest {
+  uint64 id = 1;
+}
+
+message QueryGetBankrollResponse {
+  BankrollView view = 1;
+}
+
+message QueryAllBankrollsRequest {
+  // FIX: Revert to v1beta1
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+message QueryAllBankrollsResponse {
+  repeated BankrollView                    views       = 1;
+  // FIX: Revert to v1beta1
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+message QueryBankrollGamesRequest {
+  uint64 id = 1;
+}
+
+message BankrollGame {
+  uint64 game_id = 1;
+  uint32 status = 2; // BankrollGameStatus
+}
+
+message QueryBankrollGamesResponse {
+  repeated BankrollGame games = 1;
+}
+
+message QueryGetBetRequest {
+  uint64 id = 1;
+}
+
+message QueryGetBetResponse {
+  Bet bet = 1;
+}
+
+message BankrollView {
+  Bankroll bankroll  = 1;
+  string   balance   = 2;
+  string   available = 3; 
+  string   denom     = 4;
+}
+
+message QueryBetsByBankrollRequest {
+  uint64 bankroll_id = 1;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+message QueryBetsByBankrollResponse {
+  repeated Bet bets = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+message QueryBetsByBettorRequest {
+  string bettor = 1; 
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+message QueryBetsByBettorResponse {
+  repeated Bet bets = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+message QueryGameDefinitionRequest {
+  uint64 id = 1;
+}
+
+message QueryGameDefinitionResponse {
+  GameDefinition game_definition = 1;
+}
+
+// NO PAGINATION HERE (Prevents the crash)
+message QueryGameDefinitionsRequest {
+}
+
+message QueryGameDefinitionsResponse {
+  repeated GameDefinition game_definitions = 1;
+}

@@ -1,0 +1,205 @@
+syntax = "proto3";
+
+package exohash.house.v1;
+
+import "amino/amino.proto";
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "exohash/house/v1/params.proto";
+import "exohash/house/v1/game.proto";
+
+option go_package exohash.house.v1;
+
+// Msg defines the Msg service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // UpdateParams defines a governance operation for updating the x/house module parameters.
+  // The authority defaults to the x/gov module account.
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
+
+  // Bankroll Management
+  rpc CreateBankroll(MsgCreateBankroll) returns (MsgCreateBankrollResponse);
+  rpc Deposit(MsgDeposit) returns (MsgDepositResponse);
+  rpc Withdraw(MsgWithdraw) returns (MsgWithdrawResponse);
+
+  // Game Management
+  rpc CreateGameDefinition(MsgCreateGameDefinition) returns (MsgCreateGameDefinitionResponse);
+  // Betting
+  rpc PlaceBet(MsgPlaceBet) returns (MsgPlaceBetResponse);
+  rpc GameAction(MsgGameAction) returns (MsgGameActionResponse);
+  // Private bankroll game management
+  rpc BankrollAddGame(MsgBankrollAddGame) returns (MsgBankrollAddGameResponse);
+  rpc BankrollPauseGame(MsgBankrollPauseGame) returns (MsgBankrollPauseGameResponse);
+  rpc BankrollResumeGame(MsgBankrollResumeGame) returns (MsgBankrollResumeGameResponse);  
+  // Arena/session games
+  rpc JoinRound(MsgJoinRound) returns (MsgJoinRoundResponse);
+  // Interactive action for an existing arena entry
+  rpc EntryAction(MsgEntryAction) returns (MsgEntryActionResponse);
+  
+}
+
+// --- Message Definitions ---
+
+message MsgUpdateParams {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name)           = "exohash/x/house/MsgUpdateParams";
+
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  Params params    = 2 [(gogoproto.nullable)  = false];
+}
+message MsgUpdateParamsResponse {}
+
+message MsgCreateBankroll {
+  option (cosmos.msg.v1.signer) = "creator";
+  
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  cosmos.base.v1beta1.Coin amount = 2 [(gogoproto.nullable) = false];
+
+
+  // is_private: if true, only the creator can deposit/withdraw liquidity.
+  bool is_private = 3;
+
+  // Optional overrides of risk limits. If zero, defaults from module constants.
+  uint32 max_payout_cap_bps_override = 5;
+  uint32 max_reserved_bps_override   = 6;
+}
+message MsgCreateBankrollResponse {
+  uint64 id = 1;
+}
+
+message MsgDeposit {
+  option (cosmos.msg.v1.signer) = "creator";
+  
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 bankroll_id = 2;
+  cosmos.base.v1beta1.Coin amount = 3 [(gogoproto.nullable) = false];
+}
+message MsgDepositResponse {
+  cosmos.base.v1beta1.Coin shares_minted = 1 [(gogoproto.nullable) = false];
+}
+
+message MsgWithdraw {
+  option (cosmos.msg.v1.signer) = "creator";
+  
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 bankroll_id = 2;
+  cosmos.base.v1beta1.Coin shares = 3 [(gogoproto.nullable) = false];
+}
+message MsgWithdrawResponse {
+  uint64 withdrawal_id = 1;
+}
+
+message MsgCreateGameDefinition {
+  option (cosmos.msg.v1.signer) = "creator";
+
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string engine  = 2;
+  string config_json = 3; 
+  SettlementMode settlement_mode = 4;
+}
+message MsgCreateGameDefinitionResponse {
+  uint64 game_id = 1;
+}
+
+
+message MsgPlaceBet {
+  option (cosmos.msg.v1.signer) = "creator";
+
+  // Field number 5 and name "max_payout" were removed to ensure
+  // max payout is ALWAYS calculated by engines (never client-provided).
+  reserved 5;
+  reserved "max_payout";
+
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 bankroll_id = 2;
+  uint64 game_id     = 3;
+
+  cosmos.base.v1beta1.Coin stake      = 4 [(gogoproto.nullable) = false];
+
+  bytes game_state = 6; // Initial state JSON
+  // optional referrer credited with affiliate fees
+  string referrer = 7 [(cosmos_proto.scalar) = "cosmos.AddressString"];  
+}
+message MsgPlaceBetResponse {
+  uint64 bet_id = 1;
+}
+
+message MsgGameAction {
+  option (cosmos.msg.v1.signer) = "creator";
+
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 bet_id  = 2;
+  bytes  action  = 3; // JSON action
+}
+message MsgGameActionResponse {
+  bool                     finished       = 1;
+  cosmos.base.v1beta1.Coin payout         = 2 [(gogoproto.nullable) = false];
+  bytes                    new_game_state = 3;
+}
+message MsgBankrollAddGame {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1;
+  uint64 bankroll_id = 2;
+  uint64 game_id = 3;
+}
+message MsgBankrollAddGameResponse {}
+
+message MsgBankrollPauseGame {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1;
+  uint64 bankroll_id = 2;
+  uint64 game_id = 3;
+}
+message MsgBankrollPauseGameResponse {}
+
+message MsgBankrollResumeGame {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator = 1;
+  uint64 bankroll_id = 2;
+  uint64 game_id = 3;
+}
+message MsgBankrollResumeGameResponse {}
+
+
+// --- Arena / Session games ---
+
+message MsgJoinRound {
+  option (cosmos.msg.v1.signer) = "creator";
+
+  // Field number 6 and name "max_payout" were removed to ensure
+  // max payout is ALWAYS calculated by engines (never client-provided).
+  reserved 6;
+  reserved "max_payout";
+
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 bankroll_id = 2;
+  uint64 game_id = 3;
+
+  // If 0, join the current OPEN round for (bankroll_id, game_id), or create one.
+  uint64 round_id = 4;
+
+  cosmos.base.v1beta1.Coin stake = 5 [(gogoproto.nullable) = false];
+
+  // Optional engine-specific entry init state.
+  bytes entry_state = 7;
+}
+
+message MsgJoinRoundResponse {
+  uint64 round_id = 1;
+  uint64 entry_id = 2;
+}
+message MsgEntryAction {
+  option (cosmos.msg.v1.signer) = "creator";
+
+  string creator = 1;
+  uint64 entry_id = 2; // The specific seat/ticket the user is updating
+  bytes  action = 3;   // JSON payload, e.g. {"type": "cashout"}
+}
+
+message MsgEntryActionResponse {
+  // We can return the new status or payout info here if needed, 
+  // but empty is standard for async block handling.
+}

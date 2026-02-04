@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package exohash.valrewards.v1;
+
+import "gogoproto/gogo.proto";
+
+option go_package exohash.valrewards.v1;
+
+message Params {
+  bool enabled = 1;
+
+  uint64 interval_blocks = 2 [(gogoproto.moretags) = 'yaml:"interval_blocks"'];
+}

@@ -1,0 +1,225 @@
+syntax = "proto3";
+
+package exohash.beacon.v1;
+
+option go_package exohash.beacon.v1;
+
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "exohash/beacon/v1/dkg.proto";
+
+// Query defines the gRPC query service for the beacon module.
+// It exposes DKG lifecycle state used by the internal DKG controller.
+service Query {
+  // ---------------------------------------------------------------------------
+  // DKG key registry
+  // ---------------------------------------------------------------------------
+
+  // GetDKGKey returns the registered DKG public key (if any) for a validator.
+  rpc GetDKGKey(QueryGetDKGKeyRequest) returns (QueryGetDKGKeyResponse);
+
+  // DKGKeys lists all registered DKG keys (optionally paginated).
+  rpc DKGKeys(QueryDKGKeysRequest) returns (QueryDKGKeysResponse);
+
+  // ---------------------------------------------------------------------------
+  // DKG lifecycle & data
+  // ---------------------------------------------------------------------------
+
+  // GetDKGCurrentEpoch returns the current DKG epoch (0 if none has been
+  // started yet).
+  rpc GetDKGCurrentEpoch(QueryGetDKGCurrentEpochRequest)
+      returns (QueryGetDKGCurrentEpochResponse);
+
+  // GetDKGSession returns the DKG session for a given epoch.
+  rpc GetDKGSession(QueryGetDKGSessionRequest)
+      returns (QueryGetDKGSessionResponse);
+
+  // ListDKGParticipants returns the ordered participant list for an epoch.
+  rpc ListDKGParticipants(QueryListDKGParticipantsRequest)
+      returns (QueryListDKGParticipantsResponse);
+
+  // ListDKGCommitments returns all commitments for an epoch.
+  rpc ListDKGCommitments(QueryListDKGCommitmentsRequest)
+      returns (QueryListDKGCommitmentsResponse);
+
+  // ListDKGShares returns all shares *from* a given dealer for an epoch.
+  rpc ListDKGShares(QueryListDKGSharesRequest)
+      returns (QueryListDKGSharesResponse);
+
+  // ListDKGSharesTo returns all shares *to* a given receiver for an epoch.
+  rpc ListDKGSharesTo(QueryListDKGSharesToRequest)
+      returns (QueryListDKGSharesToResponse);
+
+  // GetDKGBlsShare returns the BLS pubkey share (if any) for a participant in
+  // a given epoch.
+  rpc GetDKGBlsShare(QueryGetDKGBlsShareRequest)
+      returns (QueryGetDKGBlsShareResponse);
+
+  // GetDKGResult returns the finalized DKG result for an epoch.
+  rpc GetDKGResult(QueryGetDKGResultRequest)
+      returns (QueryGetDKGResultResponse);
+
+  // GetDKGResultByHeight returns the active DKG result at a given block height
+  // (if any).
+  rpc GetDKGResultByHeight(QueryGetDKGResultByHeightRequest)
+      returns (QueryGetDKGResultByHeightResponse);
+}
+
+// -----------------------------------------------------------------------------
+// DKG key registry
+// -----------------------------------------------------------------------------
+
+// A single (cons_address, dkg_pubkey) pair. node_endpoint is reserved for
+// future use (off-chain metadata); it is not stored on-chain in the current
+// implementation and will be empty in responses.
+message DKGKeyEntry {
+  string cons_address  = 1;
+  bytes  dkg_pubkey    = 2;
+  string node_endpoint = 3;
+}
+
+message QueryGetDKGKeyRequest {
+  string cons_address = 1;
+}
+
+message QueryGetDKGKeyResponse {
+  string cons_address  = 1;
+  bytes  dkg_pubkey    = 2;
+  string node_endpoint = 3;
+}
+
+message QueryDKGKeysRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+message QueryDKGKeysResponse {
+  repeated DKGKeyEntry entries    = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// -----------------------------------------------------------------------------
+// DKG lifecycle & state
+// -----------------------------------------------------------------------------
+
+message QueryGetDKGCurrentEpochRequest {}
+
+message QueryGetDKGCurrentEpochResponse {
+  uint64 epoch = 1;
+}
+
+message QueryGetDKGSessionRequest {
+  uint64 epoch = 1;
+}
+
+message QueryGetDKGSessionResponse {
+  DKGSession session = 1;
+}
+
+// -----------------------------------------------------------------------------
+// Participant view
+// -----------------------------------------------------------------------------
+
+// Flattened participant view for RPC clients, reconstructed from PartByIdx and
+// the DKG key registry. This is separate from DKGParticipantSnapshot which is
+// used internally in the keeper.
+message DKGParticipant {
+  string cons_address  = 1;
+  bytes  dkg_pubkey    = 2;
+  uint32 index         = 3;
+  string node_endpoint = 4;
+}
+
+message QueryListDKGParticipantsRequest {
+  uint64 epoch = 1;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+message QueryListDKGParticipantsResponse {
+  repeated DKGParticipant participants = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// -----------------------------------------------------------------------------
+// Commitments
+// -----------------------------------------------------------------------------
+
+message DKGCommitmentEntry {
+  string cons_address = 1;
+  bytes  commitment   = 2;
+}
+
+message QueryListDKGCommitmentsRequest {
+  uint64 epoch = 1;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+message QueryListDKGCommitmentsResponse {
+  repeated DKGCommitmentEntry commitments = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// -----------------------------------------------------------------------------
+// Shares
+// -----------------------------------------------------------------------------
+
+message DKGShareEntry {
+  string from_cons_address = 1;
+  string to_cons_address   = 2;
+  bytes  encrypted_share   = 3;
+}
+
+message QueryListDKGSharesRequest {
+  uint64 epoch           = 1;
+  string from_cons_address = 2;
+  cosmos.base.query.v1beta1.PageRequest pagination = 3;
+}
+
+message QueryListDKGSharesResponse {
+  repeated DKGShareEntry shares = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+message QueryListDKGSharesToRequest {
+  uint64 epoch         = 1;
+  string to_cons_address = 2;
+  cosmos.base.query.v1beta1.PageRequest pagination = 3;
+}
+
+message QueryListDKGSharesToResponse {
+  repeated DKGShareEntry shares = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// -----------------------------------------------------------------------------
+// BLS share
+// -----------------------------------------------------------------------------
+
+message QueryGetDKGBlsShareRequest {
+  uint64 epoch       = 1;
+  string cons_address = 2;
+}
+
+message QueryGetDKGBlsShareResponse {
+  uint64 epoch            = 1;
+  string cons_address     = 2;
+  bytes  bls_pubkey_share = 3;
+}
+
+// -----------------------------------------------------------------------------
+// DKG result
+// -----------------------------------------------------------------------------
+
+message QueryGetDKGResultRequest {
+  uint64 epoch = 1;
+}
+
+message QueryGetDKGResultResponse {
+  DKGResult result = 1;
+}
+
+message QueryGetDKGResultByHeightRequest {
+  uint64 height = 1;
+}
+
+message QueryGetDKGResultByHeightResponse {
+  DKGResult result = 1;
+}

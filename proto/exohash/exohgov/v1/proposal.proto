@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package exohash.exohgov.v1;
+
+option go_package exohash.exohgov.v1;
+
+import "gogoproto/gogo.proto";
+import "exohash/exohgov/v1/upgrade.proto";
+import "exohash/exohrewards/v1/params.proto";
+import "exohash/beacon/v1/params.proto";
+
+message Proposal {
+  uint64 id = 1;
+
+  string title = 2;
+  string description = 3;
+
+  // Voting timestamps are unix seconds.
+  int64 voting_start_time = 4;
+  int64 voting_end_time = 5;
+
+  // Executed indicates EndBlocker already finalized this proposal (pass or fail).
+  bool executed = 6;
+
+  // Exactly ONE of the following must be set (enforced in keeper & endblocker):
+
+  // Chain upgrade scheduling (via x/upgrade authority wired to exohgov).
+  UpgradePlan plan = 7 [(gogoproto.nullable) = true];
+
+  // Whitelisted mutable params.
+  exohrewards.types.Params exohrewards_params = 8 [(gogoproto.nullable) = true];
+  beacon.types.Params beacon_params = 9 [(gogoproto.nullable) = true];
+}

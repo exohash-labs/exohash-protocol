@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package exohash.exohgov.v1;
+
+option go_package exohash.exohgov.v1;
+
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+
+import "exohash/exohgov/v1/upgrade.proto";
+import "exohash/exohgov/v1/vote.proto";
+
+import "exohash/exohrewards/v1/params.proto";
+import "exohash/beacon/v1/params.proto";
+
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  rpc SubmitProposal(MsgSubmitProposal) returns (MsgSubmitProposalResponse);
+  rpc Vote(MsgVote) returns (MsgVoteResponse);
+  rpc CancelProposal(MsgCancelProposal) returns (MsgCancelProposalResponse);
+}
+
+message MsgSubmitProposal {
+  option (cosmos.msg.v1.signer) = "proposer";
+
+  string proposer = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  string title = 2;
+  string description = 3;
+
+  // Exactly ONE of the following must be non-null (enforced in keeper):
+  UpgradePlan plan = 4 [(gogoproto.nullable) = true];
+
+  exohrewards.types.Params exohrewards_params = 5 [(gogoproto.nullable) = true];
+  beacon.types.Params beacon_params = 6 [(gogoproto.nullable) = true];
+}
+
+message MsgSubmitProposalResponse {
+  uint64 proposal_id = 1;
+}
+
+message MsgVote {
+  option (cosmos.msg.v1.signer) = "voter";
+
+  string voter = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 proposal_id = 2;
+
+  VoteOption option = 3;
+}
+
+message MsgVoteResponse {}
+
+message MsgCancelProposal {
+  option (cosmos.msg.v1.signer) = "authority";
+
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  uint64 proposal_id = 2;
+}
+
+message MsgCancelProposalResponse {}

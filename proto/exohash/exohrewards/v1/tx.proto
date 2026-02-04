@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package exohash.exohrewards.v1;
+
+import "amino/amino.proto";
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "exohash/exohrewards/v1/params.proto";
+
+option go_package exohash.exohrewards.v1;
+
+// Msg defines the Msg service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // UpdateParams defines a governance operation for updating the module parameters.
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
+
+  // Stake stakes (locks) EXOH into the rewards module.
+  rpc Stake(MsgStake) returns (MsgStakeResponse);
+
+  // Unstake unstakes EXOH from the rewards module.
+  rpc Unstake(MsgUnstake) returns (MsgUnstakeResponse);
+
+  // Claim claims accumulated rewards (in reward_denom).
+  rpc Claim(MsgClaim) returns (MsgClaimResponse);
+}
+
+message MsgUpdateParams {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "exohash/x/exohrewards/MsgUpdateParams";
+
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  Params params = 2 [(gogoproto.nullable) = false];
+}
+message MsgUpdateParamsResponse {}
+
+message MsgStake {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "exohash/x/exohrewards/MsgStake";
+
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string amount = 2 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+message MsgStakeResponse {}
+
+message MsgUnstake {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "exohash/x/exohrewards/MsgUnstake";
+
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string amount = 2 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+message MsgUnstakeResponse {}
+
+message MsgClaim {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "exohash/x/exohrewards/MsgClaim";
+
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+message MsgClaimResponse {
+  string amount = 1 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}

@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package exohash.exohgov.v1;
+
+import "gogoproto/gogo.proto";
+
+option go_package exohash.exohgov.v1;
+
+message Params {
+  string authority = 1;
+  // voting period in seconds
+  int64 voting_period_seconds = 2;
+
+  // quorum as a decimal string, e.g. "0.20"
+  string quorum = 3;
+
+  // threshold as a decimal string, e.g. "0.6666666667"
+  string threshold = 4;
+}

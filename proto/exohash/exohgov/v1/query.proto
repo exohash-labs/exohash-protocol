@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package exohash.exohgov.v1;
+
+import "gogoproto/gogo.proto";
+import "exohash/exohgov/v1/params.proto";
+import "exohash/exohgov/v1/proposal.proto";
+import "exohash/exohgov/v1/vote.proto";
+
+option go_package exohash.exohgov.v1;
+
+service Query {
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse);
+  rpc Proposal(QueryProposalRequest) returns (QueryProposalResponse);
+  rpc Proposals(QueryProposalsRequest) returns (QueryProposalsResponse);
+  rpc Vote(QueryVoteRequest) returns (QueryVoteResponse);
+}
+
+message QueryParamsRequest {}
+message QueryParamsResponse { Params params = 1 [(gogoproto.nullable) = false]; }
+
+message QueryProposalRequest { uint64 proposal_id = 1; }
+message QueryProposalResponse { Proposal proposal = 1 [(gogoproto.nullable) = false]; }
+
+message QueryProposalsRequest {}
+message QueryProposalsResponse { repeated Proposal proposals = 1 [(gogoproto.nullable) = false]; }
+
+message QueryVoteRequest { uint64 proposal_id = 1; string voter = 2; }
+message QueryVoteResponse { Vote vote = 1 [(gogoproto.nullable) = false]; }

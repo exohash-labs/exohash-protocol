@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package exohash.house.v1;
+
+import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package exohash.house.v1;
+
+// Bankroll represents a liquidity pool for gambling.
+message Bankroll {
+  uint64 id      = 1;
+  string creator = 2;
+
+  // total_reserved tracks the amount of liquidity currently locked in active bets.
+  cosmos.base.v1beta1.Coin total_reserved = 4 [(gogoproto.nullable) = false];
+
+  // max_payout_cap_bps limits the max payout of a single bet relative to liquidity.
+  uint32 max_payout_cap_bps = 5;
+
+  // max_reserved_bps limits the total portion of the bankroll that can be reserved.
+  uint32 max_reserved_bps = 6;
+
+  // total_shares tracks the outstanding LP tokens (shares) for this bankroll.
+  cosmos.base.v1beta1.Coin total_shares = 7 [(gogoproto.nullable) = false];
+
+  // --- NEW ---
+
+  // is_private indicates whether only the creator can deposit/withdraw liquidity.
+  bool is_private = 8;
+
+  // pending_withdrawal_total is the total USDC amount queued for withdrawal,
+  // encoded as an sdk.Int string.
+  string pending_withdrawal_total = 10;
+}
+
+// WithdrawalRequest tracks a pending liquidity withdrawal.
+message WithdrawalRequest {
+  uint64 id          = 1;
+  uint64 bankroll_id = 2;
+  string creator     = 3;
+
+  // shares is the amount of LP tokens being burned.
+  cosmos.base.v1beta1.Coin shares = 4 [(gogoproto.nullable) = false];
+
+  // created_at is when the withdrawal was requested.
+  google.protobuf.Timestamp created_at = 5 [
+    (gogoproto.stdtime)  = true,
+    (gogoproto.nullable) = false
+  ];
+
+  // claim_amount is the USDC value of the withdrawal request, locked at exit.
+  cosmos.base.v1beta1.Coin claim_amount = 6 [(gogoproto.nullable) = false];
+
+  // remaining_amount is the still-unpaid portion of claim_amount.
+  cosmos.base.v1beta1.Coin remaining_amount = 7 [(gogoproto.nullable) = false];
+}

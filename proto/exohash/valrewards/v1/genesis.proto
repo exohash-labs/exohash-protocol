@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package exohash.valrewards.v1;
+
+import "gogoproto/gogo.proto";
+import "exohash/valrewards/v1/params.proto";
+
+option go_package exohash.valrewards.v1;
+
+message Committee {
+  // bech32 consensus addresses, deterministic order
+  repeated string cons_addrs = 1 [(gogoproto.moretags) = 'yaml:"cons_addrs"'];
+}
+
+message GenesisState {
+  Params params = 1 [(gogoproto.nullable) = false];
+
+  // Stored as strings for arbitrary precision.
+  string tracked_balance = 2;
+  string current_bucket = 3;
+
+  uint64 active_epoch_id = 4;
+  int64 last_paid_height = 5;
+
+  Committee active_committee = 6 [(gogoproto.nullable) = false];
+}

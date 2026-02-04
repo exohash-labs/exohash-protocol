@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package exohash.exohrewards.v1;
+
+
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+import "google/api/annotations.proto";
+import "exohash/exohrewards/v1/params.proto";
+import "exohash/exohrewards/v1/staker.proto";
+
+option go_package exohash.exohrewards.v1;
+
+service Query {
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/exohrewards/types/params";
+  }
+
+  rpc Staker(QueryStakerRequest) returns (QueryStakerResponse) {
+    option (google.api.http).get = "/exohrewards/types/staker/{address}";
+  }
+
+  rpc State(QueryStateRequest) returns (QueryStateResponse) {
+    option (google.api.http).get = "/exohrewards/types/state";
+  }
+}
+
+message QueryParamsRequest {}
+
+message QueryParamsResponse {
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryStakerRequest {
+  string address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+message QueryStakerResponse {
+  Staker staker = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryStateRequest {}
+
+message QueryStateResponse {
+  string total_staked = 1 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  string acc_reward_per_share = 2 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  string tracked_balance = 3 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}

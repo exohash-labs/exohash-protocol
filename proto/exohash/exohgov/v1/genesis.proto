@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package exohash.exohgov.v1;
+
+import "gogoproto/gogo.proto";
+import "exohash/exohgov/v1/params.proto";
+import "exohash/exohgov/v1/proposal.proto";
+import "exohash/exohgov/v1/vote.proto";
+
+option go_package exohash.exohgov.v1;
+
+message GenesisState {
+  Params params = 1 [(gogoproto.nullable) = false];
+  uint64 next_proposal_id = 2;
+  repeated Proposal proposals = 3 [(gogoproto.nullable) = false];
+  repeated Vote votes = 4 [(gogoproto.nullable) = false];
+} 

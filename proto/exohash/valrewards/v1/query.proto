@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package exohash.valrewards.v1;
+
+import "gogoproto/gogo.proto";
+import "exohash/valrewards/v1/params.proto";
+import "exohash/valrewards/v1/genesis.proto";
+
+option go_package exohash.valrewards.v1;
+
+service Query {
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse);
+  rpc State(QueryStateRequest) returns (QueryStateResponse);
+}
+
+message QueryParamsRequest {}
+
+message QueryParamsResponse {
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryStateRequest {}
+
+message QueryStateResponse {
+  Params params = 1 [(gogoproto.nullable) = false];
+
+  string tracked_balance = 2;
+  string current_bucket = 3;
+
+  uint64 active_epoch_id = 4;
+  int64 last_paid_height = 5;
+
+  Committee active_committee = 6 [(gogoproto.nullable) = false];
+}

@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package exohash.exohgov.v1;
+
+option go_package exohash.exohgov.v1;
+
+import "google/protobuf/timestamp.proto";
+import "gogoproto/gogo.proto";
+
+// UpgradePlan is a minimal, stable governance plan type owned by exohgov.
+// It intentionally mirrors the important fields of the SDK upgrade Plan,
+// but avoids importing cosmos/upgrade/v1beta1/upgrade.proto (whose go_package
+// can vary across SDK versions and Buf deps).
+message UpgradePlan {
+  // Name of the upgrade (required).
+  string name = 1;
+
+  // Planned height to apply the upgrade (0 if using time-based upgrade).
+  int64 height = 2;
+
+  // Planned time to apply the upgrade (optional).
+  google.protobuf.Timestamp time = 3 [(gogoproto.stdtime) = true];
+
+  // Additional info (optional).
+  string info = 4;
+}

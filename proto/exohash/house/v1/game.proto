@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package exohash.house.v1;
+
+option go_package exohash.house.v1;
+// SettlementMode controls how payouts are collateralized and capped.
+//
+// - FIXED_ODDS: per-entry collateral is reserved at placement time; settlement caps payout
+//   by that reserved amount.
+// - PARI_MUTUEL: entrants fund a pool; collateral is reserved as the entrant's pool
+//   contribution (typically net stake). Settlement must NOT cap payout by the per-entry
+//   reserved amount (since that is not a max payout). Instead, the engine/orchestrator
+//   must ensure total payouts do not exceed the pool.
+enum SettlementMode {
+  SETTLEMENT_MODE_UNSPECIFIED = 0;
+  SETTLEMENT_MODE_FIXED_ODDS  = 1;
+  SETTLEMENT_MODE_PARI_MUTUEL = 2;
+}
+
+// GameDefinition defines a game that can be hosted on the platform.
+message GameDefinition {
+  uint64 id = 1;
+  
+  // engine is the internal identifier (e.g., "dice_v1", "mines_v1").
+  string engine = 2;
+
+  // config_json is the configuration parameters for the game engine.
+  // Stored as string to be human-readable in Genesis/CLI.
+  string config_json = 3;
+
+  bool enabled = 4;
+
+  // settlement_mode controls how entries are reserved and settled.
+  // If unspecified, the module defaults to FIXED_ODDS.
+  SettlementMode settlement_mode = 5;  
+} 

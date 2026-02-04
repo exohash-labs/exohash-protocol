@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+package exohash.beacon.v1;
+
+option go_package exohash.beacon.v1;
+
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+
+// ✅ NEW: beacon Params (whitelisted config surface) + MsgUpdateParams wiring
+import "exohash/beacon/v1/params.proto";
+
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  rpc RegisterDKGKey(MsgRegisterDKGKey) returns (MsgRegisterDKGKeyResponse);
+  rpc UpdateDKGKey(MsgUpdateDKGKey) returns (MsgUpdateDKGKeyResponse);
+
+  rpc DKGCommitment(MsgDKGCommitment) returns (MsgDKGCommitmentResponse);
+  rpc DKGShare(MsgDKGShare) returns (MsgDKGShareResponse);
+  rpc DKGRegisterBlsShare(MsgDKGRegisterBlsShare) returns (MsgDKGRegisterBlsShareResponse);
+
+  // 🔒 Params updates are allowed ONLY by the configured authority.
+  // On mainnet this authority is the exohgov module account address.
+  //
+  // Legacy x/gov must not be able to call this because x/beacon authority is not wired to x/gov.
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
+}
+
+message MsgRegisterDKGKey {
+  option (cosmos.msg.v1.signer) = "validator_address";
+  string validator_address = 1 [(cosmos_proto.scalar) = "cosmos.ValidatorAddressString"];
+  bytes dkg_pubkey = 2;
+}
+message MsgRegisterDKGKeyResponse {}
+
+message MsgUpdateDKGKey {
+  option (cosmos.msg.v1.signer) = "validator_address";
+  string validator_address = 1 [(cosmos_proto.scalar) = "cosmos.ValidatorAddressString"];
+  bytes dkg_pubkey = 2;
+}
+message MsgUpdateDKGKeyResponse {}
+
+message MsgDKGCommitment {
+  option (cosmos.msg.v1.signer) = "validator_address";
+  string validator_address = 1 [(cosmos_proto.scalar) = "cosmos.ValidatorAddressString"];
+  uint64 epoch             = 2;
+  bytes commitment         = 3;
+}
+message MsgDKGCommitmentResponse {}
+
+message MsgDKGShare {
+  option (cosmos.msg.v1.signer) = "validator_address";
+  string validator_address = 1 [(cosmos_proto.scalar) = "cosmos.ValidatorAddressString"];
+  uint64 epoch = 2;
+  string to_cons_address = 3;
+  bytes encrypted_share = 4;
+}
+message MsgDKGShareResponse {}
+
+message MsgDKGRegisterBlsShare {
+  option (cosmos.msg.v1.signer) = "validator_address";
+  string validator_address = 1 [(cosmos_proto.scalar) = "cosmos.ValidatorAddressString"];
+  uint64 epoch = 2;
+  // This must be exactly 48 bytes for BLS12-381.
+  bytes bls_pubkey_share = 3;
+}
+message MsgDKGRegisterBlsShareResponse {}
+
+// ✅ NEW: MsgUpdateParams
+message MsgUpdateParams {
+  option (cosmos.msg.v1.signer) = "authority";
+
+  // authority must match the keeper authority (bech32 address).
+  // On mainnet this should be the exohgov module account address.
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // New beacon parameters (whitelisted / validated).
+  Params params = 2;
+}
+
+message MsgUpdateParamsResponse {}

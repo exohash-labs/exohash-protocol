@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package exohash.house.v1;
+
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "exohash/house/v1/game.proto";
+option go_package exohash.house.v1;
+
+// RoundPhase is the engine-facing lifecycle for arena/session games.
+enum RoundPhase {
+  ROUND_PHASE_UNSPECIFIED = 0;
+  ROUND_PHASE_OPEN        = 1; // accepting entries
+  ROUND_PHASE_LOCKED      = 2; // no longer accepting entries
+  ROUND_PHASE_RESOLVING   = 3; // waiting for RNG / resolution
+  ROUND_PHASE_SETTLED     = 4; // terminal
+}
+
+// Round is a shared session that many players can join.
+//
+// Accounting and gameplay are driven by Entries (per-player) and engine-owned round_state.
+message Round {
+  uint64 id          = 1;
+  uint64 bankroll_id = 2;
+  uint64 game_id     = 3; // references GameDefinition ID
+
+  RoundPhase phase = 4;
+
+  // Engine-owned opaque state (usually JSON).
+  bytes round_state = 5;
+
+  // Phase-driven scheduling state.
+  uint64 rng_height     = 6;  // beacon height to use (H). resolution happens in BeginBlock at H1.
+  uint64 timeout_height = 7;  // optional: inactivity deadline for OPEN/LOCKED
+
+  int64 created_at_unix    = 8;
+  int64 last_action_height = 9;
+  // settlement_mode is a snapshot of GameDefinition.settlement_mode at round creation.
+  // It MUST NOT change for the lifetime of the round.
+  SettlementMode settlement_mode = 10;  
+
+  // pool_total is the total pool available for pari-mutuel payouts.
+  // It is snapshotted when the round first transitions into SETTLED.
+  // It should remain zero for FIXED_ODDS rounds.
+  cosmos.base.v1beta1.Coin pool_total = 11 [(gogoproto.nullable) = false];
+
+  // pool_paid is the cumulative amount already paid out for a pari-mutuel round.
+  // It is used to enforce pool_paid <= pool_total across paginated settlement.
+  // It should remain zero for FIXED_ODDS rounds.
+  cosmos.base.v1beta1.Coin pool_paid = 12 [(gogoproto.nullable) = false];  
+}
+
+

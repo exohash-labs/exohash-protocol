@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package exohash.exohrewards.v1;
+
+import "gogoproto/gogo.proto";
+import "exohash/exohrewards/v1/params.proto";
+import "exohash/exohrewards/v1/staker.proto";
+
+option go_package exohash.exohrewards.v1;
+
+message GenesisState {
+  Params params = 1 [(gogoproto.nullable) = false];
+
+  // total_staked is total EXOH staked in this module.
+  string total_staked = 2 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  // acc_reward_per_share is the global reward index (scaled by 1e18).
+  string acc_reward_per_share = 3 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  // tracked_balance tracks the module's reward denom balance already accounted into acc_reward_per_share.
+  string tracked_balance = 4 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  repeated Staker stakers = 5 [(gogoproto.nullable) = false];
+}

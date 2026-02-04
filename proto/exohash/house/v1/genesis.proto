@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+package exohash.house.v1;
+
+import "gogoproto/gogo.proto";
+import "exohash/house/v1/params.proto";
+import "exohash/house/v1/bankroll.proto";
+import "exohash/house/v1/bet.proto";
+import "exohash/house/v1/round.proto";
+import "exohash/house/v1/entry.proto";
+import "exohash/house/v1/game.proto";
+
+option go_package exohash.house.v1;
+
+// PendingEntryPayout exports the keeper-managed pending payout queue:
+// (round_id, entry_id) -> opaque payload bytes (currently JSON).
+message PendingEntryPayout {
+  uint64 round_id = 1;
+  uint64 entry_id = 2;
+  bytes  payload  = 3;
+}
+
+// SettlementWakeup exports the keeper-managed settlement wakeup schedule:
+// round_id -> process_height (BeginBlock height at which to run settlement tick).
+message SettlementWakeup {
+  uint64 round_id       = 1;
+  uint64 process_height = 2;
+}
+
+// GenesisState defines the house module's genesis state.
+message GenesisState {
+  // Params defines all the parameters of the module.
+  Params params = 1 [(gogoproto.nullable) = false];
+
+  // Bankrolls
+  uint64            next_bankroll_id = 2;
+  repeated Bankroll bankrolls        = 3 [(gogoproto.nullable) = false];
+
+  // Bets
+  uint64       next_bet_id = 4;
+  repeated Bet bets        = 5 [(gogoproto.nullable) = false];
+
+  // Rounds (arena/session games)
+  uint64         next_round_id = 12;
+  repeated Round rounds        = 13 [(gogoproto.nullable) = false];
+
+  // Entries
+   uint64         next_entry_id = 14;
+   repeated Entry entries       = 15 [(gogoproto.nullable) = false];
+
+  // Keeper-managed settlement continuation state (canonical, NOT derivable from rounds/entries alone)
+  repeated PendingEntryPayout pending_entry_payouts = 16 [(gogoproto.nullable) = false];
+  repeated SettlementWakeup   settlement_wakeups    = 17 [(gogoproto.nullable) = false];
+
+  // Game Definitions (Pre-registered games)
+  uint64                  next_game_def_id = 6;
+  repeated GameDefinition game_definitions = 7 [(gogoproto.nullable) = false];
+
+  // Withdrawals
+  uint64                     next_withdraw_id = 8;
+  repeated WithdrawalRequest withdrawals      = 9 [(gogoproto.nullable) = false];
+
+  // User Shares (LP Tokens Map Export)
+  repeated UserShare user_shares = 10 [(gogoproto.nullable) = false];
+
+ // Bankroll game status: (bankroll_id, game_id) -> status (ACTIVE/PAUSED)
+  repeated BankrollGameStatusEntry bankroll_game_statuses = 11 [(gogoproto.nullable) = false];  
+}
+
+// UserShare is a helper struct to export the KVStore map (BankrollID+Addr -> Amount)
+// into a list format for Genesis.
+message UserShare {
+  uint64 bankroll_id = 1;
+  string address     = 2;
+  string amount      = 3 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable)   = false
+  ];
+}
+// BankrollGameStatusEntry exports the canonical status map.
+message BankrollGameStatusEntry {
+  uint64 bankroll_id = 1;
+  uint64 game_id     = 2;
+  uint32 status      = 3; // BankrollGameStatus
+}

@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package exohash.exohgov.v1;
+
+import "gogoproto/gogo.proto";
+
+option go_package exohash.exohgov.v1;
+
+enum VoteOption {
+  VOTE_OPTION_UNSPECIFIED = 0;
+  VOTE_OPTION_YES = 1;
+  VOTE_OPTION_NO = 2;
+  VOTE_OPTION_ABSTAIN = 3;
+}
+
+message Vote {
+  uint64 proposal_id = 1;
+  string voter = 2;
+  VoteOption option = 3;
+
+  // voting weight (EXOH staked in exohrewards) captured at vote time.
+  string weight = 4;
+}

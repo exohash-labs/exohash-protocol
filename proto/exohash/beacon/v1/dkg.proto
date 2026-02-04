@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+package exohash.beacon.v1;
+
+option go_package exohash.beacon.v1;
+
+enum DKGFaultType {
+  DKG_FAULT_TYPE_UNSPECIFIED      = 0;
+  DKG_FAULT_TYPE_MISSING_COMMIT   = 1;
+  DKG_FAULT_TYPE_MISSING_SHARES   = 2;
+  DKG_FAULT_TYPE_MISSING_BLS_SHARE = 3; 
+}
+
+enum DKGStatus {
+
+  DKG_STATUS_UNSPECIFIED = 0;
+  DKG_STATUS_COMMITMENT = 1;
+  DKG_STATUS_SHARES_EXCHANGE = 2;
+  DKG_STATUS_PUBKEY_REGISTRATION = 3;
+  DKG_STATUS_FINALIZATION = 4;
+  DKG_STATUS_FINALIZED = 5;
+  DKG_STATUS_FAILED = 6;
+}
+
+message DKGSession {
+  uint64 epoch       = 1;
+  DKGStatus status   = 2;
+  int64  start_height = 3;
+  uint32 threshold_t = 4;
+}
+
+message DKGParticipantSnapshot {
+  uint32 index          = 1;
+  string cons_address   = 2;
+  bytes  dkg_pubkey     = 3;
+  bytes  bls_pubkey_share = 4; // compressed G1 48 bytes
+}
+
+message DKGResult {
+  uint64 epoch             = 1;
+  uint32 threshold_t       = 2;
+  bytes  group_pubkey      = 3; // compressed group G1 pk (48B)
+  bytes  transcript_hash   = 4; // sha256
+  repeated DKGParticipantSnapshot participants = 5;
+  int64  finalized_height  = 6;
+  int64  active_from_height = 7;
+}
+
+message BeaconShareEntryTx {
+   bytes cons_addr = 1; // CometBFT consensus address bytes (usually 20)
+   bytes sig_share = 2; // 96-byte BLS sig share
+ }
+
+// Finalized randomness for a given (epoch, height) pair.
+message BeaconRandomness {
+  uint64 epoch   = 1;
+  int64  height  = 2;
+
+  // Canonical 32-byte randomness derived from the aggregate signature.
+  bytes randomness     = 3;
+
+  // Optional: store the aggregated signature and the bitmap of signers.
+  bytes aggregate_sig  = 4; // 96 bytes
+  bytes bitmap         = 5; // up to 32 bits for 32 participants
+}

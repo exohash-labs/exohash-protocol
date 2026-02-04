@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package exohash.house.v1;
+
+import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
+
+option go_package exohash.house.v1;
+
+// BetStatus is the accounting finality status.
+// Gameplay progression is driven by GamePhase.
+enum BetStatus {
+  BET_STATUS_UNSPECIFIED = 0;
+  BET_STATUS_OPEN        = 1; // funds reserved, session is active
+  BET_STATUS_SETTLED     = 3; // terminal: payout transferred
+  BET_STATUS_EXPIRED     = 4; // terminal: refund or timeout
+}
+
+// GamePhase is the engine-facing lifecycle / state machine phase.
+enum GamePhase {
+  GAME_PHASE_UNSPECIFIED  = 0;
+  GAME_PHASE_WAITING_USER = 1; // waiting for MsgGameAction
+  GAME_PHASE_WAITING_RNG  = 2; // waiting to resolve pending action using beacon randomness
+  GAME_PHASE_FINISHING    = 3; // engine completed; keeper must transfer funds
+  GAME_PHASE_DONE         = 4; // terminal (paired with BetStatus SETTLED/EXPIRED)
+}
+
+// Bet represents a single game session.
+message Bet {
+  uint64 id          = 1;
+  string bettor      = 2;
+  uint64 bankroll_id = 3;
+  string game_id     = 4; // Reference to GameDefinition ID
+
+  cosmos.base.v1beta1.Coin stake = 5 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin max_payout_snapshot = 6 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin reserved_amount = 7 [(gogoproto.nullable) = false];
+
+  bytes game_state = 8;
+
+  int64 created_at_unix    = 9;
+  int64 last_action_height = 10;
+  BetStatus status         = 11;
+
+  bytes result = 12;
+
+  // Phase-driven scheduling state.
+  GamePhase phase          = 13;
+  uint64 rng_height        = 14; // beacon height to use (H). resolution happens in BeginBlock at H+1.
+  uint64 timeout_height    = 15; // inactivity deadline for WAITING_USER
+
+  // Fee snapshot (charged at placement).
+  // These fields make refunds deterministic even if Params (fee bps) change later.
+  // Refund policy:
+  //   - Default refunds = net_stake (stake - fees).
+  //   - Full-stake refunds are only for explicitly force-majeure / regulatory paths.
+  cosmos.base.v1beta1.Coin validator_fee = 16 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin protocol_fee  = 17 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin net_stake     = 18 [(gogoproto.nullable) = false];
+}

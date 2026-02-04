@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package exohash.house.v1;
+
+import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
+
+option go_package exohash.house.v1;
+
+// EntryStatus is the accounting finality status of an entry.
+enum EntryStatus {
+  ENTRY_STATUS_UNSPECIFIED = 0;
+  ENTRY_STATUS_OPEN        = 1; // funds reserved, round participation active
+  ENTRY_STATUS_SETTLED     = 2; // terminal: payout transferred
+  ENTRY_STATUS_REFUNDED    = 3; // terminal: refund transferred
+}
+
+// Entry represents a single player's participation in a Round.
+message Entry {
+  uint64 id          = 1;
+  uint64 round_id    = 2;
+  uint64 bankroll_id = 3; // denormalized for accounting
+
+  string bettor = 4;
+
+  cosmos.base.v1beta1.Coin stake = 5 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin max_payout_snapshot = 6 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin reserved_amount = 7 [(gogoproto.nullable) = false];
+
+  // Fee snapshot (charged at placement).
+  // See Bet.validator_fee/protocol_fee/net_stake for refund policy.
+  cosmos.base.v1beta1.Coin validator_fee = 12 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin protocol_fee  = 13 [(gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin net_stake     = 14 [(gogoproto.nullable) = false];
+
+  // Optional engine-owned per-entry state.
+  bytes entry_state = 8;
+
+  EntryStatus status = 9;
+
+  // Optional engine-owned result/receipt.
+  bytes result = 10;
+
+  int64 created_at_unix = 11;
+}
+
+

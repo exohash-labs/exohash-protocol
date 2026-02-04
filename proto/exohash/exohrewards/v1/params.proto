@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package exohash.exohrewards.v1;
+
+import "amino/amino.proto";
+
+option go_package exohash.exohrewards.v1;
+
+// Params defines the parameters for the module.
+message Params {
+  option (amino.name) = "exohash/x/exohrewards/Params";
+
+  // authority is the address that can update params (usually x/gov module account).
+  string authority = 1;
+}
