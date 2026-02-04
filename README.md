@@ -53,15 +53,17 @@ The Protobuf files are organized by module and version to ensure compatibility.
 proto/exohash/
 ├── beacon/              # Distributed Randomness Beacon
 │   └── v1/
-│       ├── dkg.proto    # Key Generation & Share Exchange
+│       ├── dkg.proto    # Key Generation
 │       └── tx.proto     # Beacon Transactions
-├── house/               # Solvency & Settlement Module
+├── house/               # Solvency, Settlement & Engines
 │   └── v1/
 │       ├── bankroll.proto
-│       └── bet.proto
-├── engines/             # Game Logic Registry
+│       ├── bet.proto
+│       ├── game.proto   # Engine Registry & Configs
+│       └── round.proto  # Multiplayer Round State
+├── exohgov/             # Governance & Parameters
 │   └── v1/
-│       └── params.proto
+│       └── proposal.proto
 └── exohrewards/         # Fee Distribution Logic
     └── v1/
 ```
